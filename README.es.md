@@ -1,4 +1,4 @@
-# Privilege Escalation using the Dirty Cow Kernel Exploit
+# Escalamiento de Privilegios usando el Kernel Exploit Dirty Cow
 <!-- hide -->
 
 > By [@rosinni](https://github.com/rosinni) and [other contributors](https://github.com/breatheco-de/kernel-exploit-dirtycow-project/graphs/contributors) at [4Geeks Academy](https://4geeksacademy.co/)
@@ -6,70 +6,69 @@
 [![build by developers](https://img.shields.io/badge/build_by-Developers-blue)](https://4geeks.com)
 [![build by developers](https://img.shields.io/twitter/follow/4geeksacademy?style=social&logo=twitter)](https://twitter.com/4geeksacademy)
 
-*These instructions are also [available in Spanish](https://github.com/breatheco-de/kernel-exploit-dirtycow-project/blob/main/README.es.md)*
+*Estas instrucciones están [disponibles en español](https://github.com/breatheco-de/kernel-exploit-dirtycow-project/blob/main/README.es.md)*
 <!-- endhide -->
 
 <!-- hide -->
 
-### Before you begin...
+### Antes de empezar...
 
-> We need you! These exercises are created and maintained in collaboration with people like you. If you find any errors or typos, please contribute and/or report them.
+> ¡Te necesitamos! Estos ejercicios se crean y mantienen en colaboración con personas como tú. Si encuentras algún error o falta de ortografía, contribuye y/o repórtalo.
 
 <!-- endhide -->
 
-## 🌱 How to start this project?
+## 🌱 ¿Cómo empezar este proyecto?
 
-The academy provides a virtual machine with a vulnerable version of Ubuntu Server (16.04.1), running a kernel affected by the **Dirty Cow** vulnerability (CVE-2016-5195).
+En la academia se encuentra desplegada una máquina virtual con una versión vulnerable de Ubuntu Server (16.04.1), que corre un kernel afectado por la falla **Dirty Cow** (CVE-2016-5195).
 
-As a student, you already have access to this system with a limited user called `student`. Your goal will be to **identify that the system is vulnerable**, **compile and run a real exploit**, and **escalate your privileges to gain root access**. This exercise simulates a realistic scenario where a local attacker, without administrative privileges, fully compromises the system by exploiting a kernel vulnerability. The objectives are:
+Como alumno, ya cuentas con acceso a este sistema mediante un usuario limitado llamado `student`. Tu objetivo será **identificar que el sistema es vulnerable**, **compilar y ejecutar un exploit real**, y **escalar tus privilegios para obtener acceso como root**. Este ejercicio representa una situación realista donde un atacante local, sin privilegios administrativos, logra comprometer completamente el sistema aprovechando una falla en el núcleo del sistema operativo. Los objetivos serán:
 
-- Check the kernel version of a Linux system.
-- Compile a real exploit using `g++`, a compiler used to build and link programs written in **C++**, generating an executable from the source code.
-- Escalate privileges from a limited user to `root`.
-- Demonstrate the success of the attack by capturing a flag located in `/root`.
+- Verificar la versión del kernel de un sistema Linux.
+- Compilar un exploit real con `g++`, el cual es un compilador que se utiliza para compilar y enlazar programas escritos en **C++**, generando un archivo ejecutable a partir del código fuente.
+- Escalar privilegios de un usuario limitado a `root`.
+- Demostrar el éxito del ataque capturando una flag ubicada en `/root`.
 
-This type of exploitation is typical in advanced security audits and Red Team environments. It will help you connect low-level operating system concepts with real offensive techniques, in a practical and guided way.
+Este tipo de explotación es típica en auditorías de seguridad avanzada y en entornos Red Team. Te permitirá conectar conceptos de bajo nivel del sistema operativo con técnicas ofensivas reales, de forma práctica y guiada.
 
-### Requirements
+### Requisitos
 
-* [Vulnerable Ubuntu machine with kernel `4.4.0-21-generic` (or similar unpatched)](https://storage.cloud.google.com/cybersecurity-machines/dirty-cow-lab.ova)
-* Access as a non-privileged user on the vulnerable machine (`student:password123`)
-* Kali Linux machine **(Attacker)**. This is the machine where you will prepare the exploit, and it must have the following tools installed:
+* [Máquina Ubuntu vulnerable con kernel `4.4.0-21-generic` (o similar sin parchear)](https://storage.cloud.google.com/cybersecurity-machines/dirty-cow-lab.ova)
+* Acceso como usuario no privilegiado a la maquina vulnerable (`student:password123`)
+* Maquina kali linux **(Atacante)**. Esta máquina es donde vas a realizar toda la preparación del exploit y debe contar con las siguientes herramientas:
 
-    - **🔧 `Docker`:** We will use Docker to launch an Ubuntu 16.04 container and compile the exploit with the same libraries as the victim machine. This ensures compatibility and avoids errors due to modern compiler or `glibc` versions.
+    - **🔧 `Docker`:** Usaremos Docker para lanzar un contenedor de Ubuntu 16.04 y compilar el exploit con las mismas librerías que usa la víctima. Esto garantiza compatibilidad y evita errores por versiones modernas de compiladores o `glibc`.
 
-    - **🔧 `g++`:** This is the C++ compiler. We will use it to compile the `dirty.cpp` exploit, which is written in this language. It allows us to generate an executable (`dirty`) from the source code.
+    - **🔧 `g++`:** Es el compilador de C++. Lo usaremos para compilar el exploit `dirty.cpp`, que está escrito en este lenguaje. Nos permite generar un ejecutable (`dirty`) desde el código fuente.
 
-    - **🔧 `scp` (Secure Copy Protocol):** This is a tool for securely copying files between Linux systems. We will use it to transfer the compiled exploit from Kali to the victim machine.
+    - **🔧 `scp` (Secure Copy Protocol):** Es una herramienta para copiar archivos de forma segura entre sistemas Linux. La usaremos para transferir el exploit compilado desde Kali hacia la máquina víctima.
 
 
+> 🚨 Aviso Legal: Este repositorio contiene una versión limpia y comentada del exploit **Dirty Cow** (CVE-2016-5195), diseñada exclusivamente para fines **educativos**. Esta variante crea un nuevo usuario con privilegios de root explotando una condición de carrera en el subsistema de memoria del kernel de Linux. Este exploit es solo para **uso educativo**. Debe utilizarse en entornos **controlados y legales**, como laboratorios, máquinas virtuales de práctica o clases de ciberseguridad.
 
-> 🚨 Legal Notice: This repository contains a clean and commented version of the **Dirty Cow** exploit (CVE-2016-5195), designed exclusively for **educational** purposes. This variant creates a new user with root privileges by exploiting a race condition in the Linux kernel memory subsystem. This exploit is for **educational use only**. It must be used in **controlled and legal** environments, such as labs, practice virtual machines, or cybersecurity classes.
+## 📝 Instrucciones
 
-## 📝 Instructions
+### Paso 1: Verificar la versión del kernel
 
-### Step 1: Check the kernel version
-
-1. Log in to the vulnerable machine with the limited user and run:
+1. Inicia sesión en la máquina vulnerable con el usuario limitado y ejecuta:
 
     ```bash
     uname -a
     ```
 
-    This returns something like:
+    Esto devuelve algo como:
 
     ```bash
     Linux dirtycow-lab 4.4.0-31-generic #50-Ubuntu SMP Tue Sep 6 15:42:33 UTC 2016 x86_64 x86_64 x86_64 
     ```
-2. Note the version and research how to exploit that vulnerability using databases like [Exploit-DB](https://www.exploit-db.com/exploits/40847), GitHub, or searchsploit from Kali. For this exercise, **we provide you with a functional and documented exploit that you can [download here](https://raw.githubusercontent.com/breatheco-de/kernel-exploit-dirtycow-project/refs/heads/main/assets/dirty.cpp)**.
+2. Anota la version e investiga cómo explotar esa vulnerabilidad utilizando bases de datos como [Exploit-DB](https://www.exploit-db.com/exploits/40847), GitHub o searchsploit desde Kali. Para esta práctica **te proporcionamos un exploit funcional y documentado que puedes [descargar](https://raw.githubusercontent.com/breatheco-de/kernel-exploit-dirtycow-project/refs/heads/main/assets/dirty.cpp)**.
 
 
 
-> ⚠️ **IMPORTANT!** The vulnerable machine does not have compilation tools installed, nor `sudo` permissions to add them. Therefore, we must compile the exploit on Kali, inside a Docker container with Ubuntu 16.04, which has the same versions of glibc, libstdc++, and system libraries as the vulnerable machine; otherwise, you may encounter version issues.
+> ⚠️ **¡IMPORTANTE!** La máquina vulnerable no tiene herramientas de compilación instaladas, ni permisos `sudo` para agregarlas. Por eso, debemos compilar el exploit en Kali, dentro de un contenedor Docker con Ubuntu 16.04, que tenga las mismas versiones de glibc, libstdc++ y librerías del sistema de la maquina vulnerada porque de lo contrario dará problemas de versiones.
 
-### Step 2: Prepare the environment in Kali with Docker
+### Paso 2: Preparar el entorno en Kali con Docker
 
-1. Install Docker on Kali:
+1. Instala Docker en Kali:
 
     ```bash
     sudo apt update
@@ -78,73 +77,73 @@ This type of exploitation is typical in advanced security audits and Red Team en
     sudo systemctl enable docker
     ```
 
-2. Download the Ubuntu 16.04 image:
+2. Descarga la imagen de Ubuntu 16.04:
 
     ```bash
     sudo docker pull ubuntu:16.04
     ```
 
-3. Launch a container:
+3. Lanza un contenedor:
 
     ```bash
     sudo docker run -it --name compile-ubuntu16 ubuntu:16.04
     ```
 
-4. Install compilation tools:
+4. Instala herramientas de compilación:
 
     ```bash
     apt update
     apt install build-essential libutil-dev -y
     ```
 
-### Step 3: Create and compile the dirty.cpp exploit
+### Paso 3: Crear y compilar el exploit dirty.cpp
 
-1. Create the file inside the container:
+1. Crea el archivo dentro del contenedor:
 
     ```bash
     nano dirty.cpp
     ```
 
-    (Paste the full exploit code from [dirty.cpp](https://raw.githubusercontent.com/breatheco-de/kernel-exploit-dirtycow-project/refs/heads/main/assets/dirty.cpp) provided by the academy or from [Exploit-DB 40847](https://www.exploit-db.com/exploits/40847))
+    (Pega el código completo del exploit [dirty.cpp](https://raw.githubusercontent.com/breatheco-de/kernel-exploit-dirtycow-project/refs/heads/main/assets/dirty.cpp) proporcionado por la academia o desde [Exploit-DB 40847](https://www.exploit-db.com/exploits/40847))
 
-2. Compile the binary:
+2. Compila el binario:
 
     ```bash
     g++ -Wall -pedantic -O2 -std=c++11 -pthread -o dirty dirty.cpp -lutil
     ```
 
-3. Exit the container:
+3. Sal del contenedor:
 
     ```bash
     exit
     ```
 
-4. Copy the compiled binary from the container to Kali:
+4. Copia el binario compilado desde el contenedor a Kali:
 
     ```bash
     sudo docker cp compile-ubuntu16:/dirty ./dirty
     ```
 
-### Step 4: Run on the victim
+### Paso 4: Ejecutar en la víctima
 
-1. Transfer the binary to the victim:
+1. Transfiere el binario a la víctima:
 
     ```bash
-    scp dirty student@<VICTIM_IP>:/home/student
+    scp dirty student@<IP_VICTIMA>:/home/student
     ```
 
-2. On the victim, run it:
+2. En la víctima, ejecútalo:
 
     ```bash
     chmod +x dirty
     ./dirty
     ```
 
-    If the exploit is successful, you will see a message telling you the password assigned to the root user.
+    Si el exploit tiene éxito veras un mensaje diciendote la contraseña asignada al usuario root.
 
-### Step 5: Escalate privileges
+### Paso 5: Escalar privilegios
 
-1. Once the exploit finishes executing, switch to the `root` user.
-2. Verify that you have root access by entering the generated password.
-3. Finally, capture the flag. To confirm the success of the attack, read the contents of the flag file located in the `/root/flag.txt` directory. If everything worked correctly, you will see the flag's content.
+1. Una vez finalizada la ejecución del exploit, cambia de usuario a `root`.
+2. Verifica que tienes acceso como `root` ingresando la contraseña generada.
+3. Por ultimo captura la flag. Para confirmar el éxito del ataque, lee el contenido del archivo de flag ubicado en el directorio `/root/flag.txt`. Si todo funcionó correctamente, verás el contenido de la flag.
 
